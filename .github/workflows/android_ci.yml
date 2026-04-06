@@ -44,16 +44,13 @@ jobs:
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v2'
 
-    - name: List available devices
-      run: gcloud firebase test android models list
-
     - name: Run UI Tests in Firebase Test Lab
       run: |
         gcloud firebase test android run \
           --type instrumentation \
           --app app/build/outputs/apk/debug/app-debug.apk \
           --test app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
-          --device model=NexusLowRes,version=30,locale=ru,orientation=portrait \
+          --device model=Pixel2.arm,version=30,locale=ru,orientation=portrait \
           --timeout 10m
 
     - name: Upload APK Artifact
