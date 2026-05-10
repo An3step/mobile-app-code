@@ -1,13 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
     id("org.jetbrains.kotlin.android")
-    // Добавьте ksp для генерации кода, если планируете переход на Room,
-    // но для чистого SQLite дополнительные плагины не требуются.
 }
 
 android {
     namespace = "com.example.project_skebob"
-    compileSdk = 35 // Рекомендуется использовать актуальный SDK
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.project_skebob"
@@ -27,7 +25,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // Добавьте этот блок обязательно!
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -40,15 +37,18 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
 
-    // Многопоточность (Coroutines)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
 
-    // Сеть (Retrofit)
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
 
-    // UI компоненты
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.core.testing)
 }

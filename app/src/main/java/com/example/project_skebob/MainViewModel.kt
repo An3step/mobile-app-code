@@ -4,12 +4,16 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private val dbHelper = DatabaseHelper(application)
+    internal var dbHelper = DatabaseHelper(application)
+    internal var apiService = ApiClient.apiService
+    internal var ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    internal var mainDispatcher: CoroutineDispatcher = Dispatchers.Main
 
     val allFacts = MutableLiveData<List<FactRecord>>()
     val favoriteFacts = MutableLiveData<List<FactRecord>>()
@@ -24,10 +28,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadAll(filter24: Boolean = filterAll) {
         filterAll = filter24
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val data = dbHelper.getFacts(onlyFavorites = false, filterLast24h = filterAll)
             val stats = dbHelper.getAggregationStats(onlyFavorites = false)
-            withContext(Dispatchers.Main) {
+            withContext(mainDispatcher) {
                 allFacts.value = data
                 allStatsLiveData.value = stats
             }
@@ -36,10 +40,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadFavorites(filter24: Boolean = filterFavs) {
         filterFavs = filter24
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val data = dbHelper.getFacts(onlyFavorites = true, filterLast24h = filterFavs)
             val stats = dbHelper.getAggregationStats(onlyFavorites = true)
-            withContext(Dispatchers.Main) {
+            withContext(mainDispatcher) {
                 favoriteFacts.value = data
                 favStatsLiveData.value = stats
             }
@@ -47,7 +51,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun toggleFavorite(fact: FactRecord) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             dbHelper.toggleFavorite(fact.id, fact.isFavorite)
 
             loadAll()
@@ -56,7 +60,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteFact(id: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             dbHelper.deleteFact(id)
             loadAll()
             loadFavorites()
@@ -65,13 +69,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 
     fun fetchAndSaveNewFact() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             try {
-                val response = ApiClient.apiService.getRandomFact()
+                val response = apiService.getRandomFact()
                 dbHelper.insertFact(response.fact)
                 loadAll()
             } catch (e: Exception) {
-
+                withContext(mainDispatcher) {
+                    errorLiveData.value = e.message ?: "Unknown error"
+                }
             }
         }
     }
